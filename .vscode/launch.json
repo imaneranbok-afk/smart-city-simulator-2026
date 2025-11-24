@@ -2,11 +2,12 @@
   "version": "0.2.0",
   "configurations": [
     
+    
     {
       "name": "Debug",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/${fileBasenameNoExtension}",
+      "program": "${workspaceFolder}/smart_city",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
@@ -21,6 +22,7 @@
         }
       ],
       "windows": {
+        "program": "${workspaceFolder}/smart_city.exe",
         "miDebuggerPath": "C:/raylib/w64devkit/bin/gdb.exe"
       },
       "osx": {
@@ -40,10 +42,10 @@
       "cwd": "${workspaceFolder}",
       "environment": [],
       "externalConsole": false,
-      "program": "${workspaceFolder}/${fileBasenameNoExtension}",
+      "program": "${workspaceFolder}/smart_city",
       "MIMode": "gdb",
       "windows": {
-        "program": "${workspaceFolder}/${fileBasenameNoExtension}.exe",
+        "program": "${workspaceFolder}/smart_city.exe",
         "miDebuggerPath": "C:/raylib/w64devkit/bin/gdb.exe"
       },
       "osx": {

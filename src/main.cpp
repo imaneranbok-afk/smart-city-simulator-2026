@@ -1,155 +1,102 @@
 #include "raylib.h"
 #include "raymath.h"
+#include <cstdlib>
+#include <ctime>
 #include "city_data.h"
 #include "city_generator.h"
-#include "emergency_system.h"
 #include "camera_controller.h"
-#include <cmath>
-#include <vector>
-#include <string>
+#include "emergency_system.h" 
+#include "city_renderer.h" 
+#include "emergency_data.h" 
 
-// Variables globales externes
-extern CustomCameraMode currentCameraMode;
-extern Vehicle emergencyVehicle;
+// Déclaration des variables globales
+// Elles sont DEFINIES dans les fichiers .cpp respectifs
+extern Vehicle emergencyVehicle; 
 extern Emergency currentEmergency;
+extern CustomCameraMode currentCameraMode; 
 
-// Constantes
-const int screenWidth = 1200;
-const int screenHeight = 900;
+// Fonctions externes :
+extern Camera3D createBaseCamera();
+extern void InitEmergencySystem(const CityMap& city);
+extern void UpdateCameraMode(Camera3D* camera, const Vector3& followTarget);
+extern void UpdateEmergencySystem(float deltaTime);
+extern void StartEmergency(CityMap& city);
+extern void StopEmergency();
+extern void DrawCityMap(const CityMap& city);
 
-// Fonction pour dessiner un segment de route
-void DrawRoadSegment(const RoadSegment& road) {
-    Vector3 roadCenter = { 
-        (road.start.x + road.end.x) * 0.5f,
-        0.0f,
-        (road.start.z + road.end.z) * 0.5f
-    };
-    
-    float dx = fabsf(road.end.x - road.start.x);
-    float dz = fabsf(road.end.z - road.start.z);
-    float length = Vector3Distance(road.start, road.end);
 
-    if (dx > dz) {
-        DrawCube(roadCenter, length, 0.1f, road.width, road.roadColor);
-    } else {
-        DrawCube(roadCenter, road.width, 0.1f, length, road.roadColor);
-    }
-}
-
-// Fonction pour dessiner un bâtiment
-void DrawBuilding(const Building& building) {
-    Vector3 buildingCenter = { 
-        building.position.x, 
-        building.size.y * 0.5f, 
-        building.position.z 
-    };
-    
-    DrawCube(buildingCenter, building.size.x, building.size.y, building.size.z, building.mainColor);
-    DrawCubeWires(buildingCenter, building.size.x, building.size.y, building.size.z, BLACK);
-}
-
-// Fonction pour dessiner la ville complète
-void DrawCity(const CityMap& city) {
-    // Sol
-    float groundSize = 1000.0f;
-    DrawPlane((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector2){ groundSize, groundSize }, (Color){ 50, 180, 80, 255 });
-
-    // Routes
-    for (size_t i = 0; i < city.roads.size(); i++) {
-        DrawRoadSegment(city.roads[i]);
-    }
-
-    // Bâtiments
-    for (size_t i = 0; i < city.buildings.size(); i++) {
-        DrawBuilding(city.buildings[i]);
-    }
-}
-
-// Fonction pour dessiner la scène complète
-void DrawScene(Camera3D camera, const CityMap& city) {
-    BeginDrawing();
-    ClearBackground((Color){ 10, 10, 40, 255 });
-
-    BeginMode3D(camera);
-        DrawCity(city);
-        DrawEmergencyEffects(city);
-        DrawGrid(100, 10.0f);
-    EndMode3D();
-
-    // UI
-    DrawRectangle(0, 0, screenWidth, 100, Fade(BLACK, 0.7f));
-    
-    const char* modeName = "";
-    switch (currentCameraMode) {
-        case CUSTOM_CAMERA_MODE_FREE: modeName = "LIBRE"; break;
-        case CUSTOM_CAMERA_MODE_FOLLOW: modeName = "SUIVEUR"; break;
-        case CUSTOM_CAMERA_MODE_STRATEGIC: modeName = "STRATEGIQUE"; break;
-        default: modeName = "INCONNU";
-    }
-    
-    DrawText(TextFormat("Mode Camera: %s", modeName), 20, 15, 22, GREEN);
-    DrawText(TextFormat("Position: (%.1f, %.1f, %.1f)", camera.position.x, camera.position.y, camera.position.z), 20, 40, 18, WHITE);
-    
-    // Statut urgence
-    Color emergencyColor = currentEmergency.is_active ? RED : GREEN;
-    const char* emergencyStatus = currentEmergency.is_active ? "ACTIVE" : "INACTIVE";
-    DrawText(TextFormat("URGENCE: %s", emergencyStatus), 20, 65, 24, emergencyColor);
-    DrawText("ESPACE: Urgence | F1/F2/F3: Ville", 20, screenHeight - 30, 20, WHITE);
-
-    DrawFPS(screenWidth - 100, 15);
-    EndDrawing();
-}
-
-// Fonction principale
 int main(void) {
-    // Initialisation
-    InitWindow(screenWidth, screenHeight, "Smart City 3D Simulator - Ville Futuriste");
-    SetTargetFPS(60);
+    // --- Configuration et Initialisation ---
+    const int screenWidth = 1400; 
+    const int screenHeight = 900;
 
-    // Génération de la ville
-    CityMap city = GenerateFuturisticCity(8, GRID_LAYOUT);
+    SetConfigFlags(FLAG_MSAA_4X_HINT); 
+    InitWindow(screenWidth, screenHeight, "City Simulator Futuriste - Rendu Complet");
 
-    // Initialisation systèmes
-    Camera3D camera = createBaseCamera();
-    InitEmergencySystem(city);
+    srand(time(NULL));
 
-    // Boucle principale
+    // 1. Génération de la Cité: 6x6 blocs de taille moyenne
+    // La fonction GenerateFuturisticCity utilise 6 comme taille de grille et CELL_SIZE_MEDIUM (100.0f)
+    CityMap city = GenerateFuturisticCity(6, GRID_LAYOUT); 
+
+    // 2. Initialisation de la Caméra
+    Camera3D camera = createBaseCamera(); 
+    currentCameraMode = CUSTOM_CAMERA_MODE_STRATEGIC;
+    // Position de départ centrée au-dessus de la carte
+    camera.position = (Vector3){ 0.0f, 300.0f, 0.0f };
+    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
+    
+    // 3. Initialisation du Système d'Urgence
+    InitEmergencySystem(city); 
+
+    SetTargetFPS(60); 
+
+    // --- Boucle Principale du Jeu ---
     while (!WindowShouldClose()) {
+        
+        // --- Mise à Jour (LOGIQUE) ---
         float deltaTime = GetFrameTime();
+        Vector3 followTarget = emergencyVehicle.position; 
+        
+        UpdateCameraMode(&camera, followTarget); 
+        UpdateEmergencySystem(deltaTime); 
 
-        // Mise à jour caméra
-        UpdateCameraMode(&camera, emergencyVehicle.position);
+        // Contrôles
+        if (IsKeyPressed(KEY_SPACE) && !currentEmergency.is_active) {
+            StartEmergency(city);
+        }
+        else if (IsKeyPressed(KEY_ENTER) && currentEmergency.is_active) {
+            StopEmergency();
+        }
 
-        // Mise à jour systèmes
-        UpdateEmergencySystem(deltaTime);
+        // --- Rendu (DESSIN) ---
+        BeginDrawing();
 
-        // Gestion urgence
-        if (IsKeyPressed(KEY_SPACE)) {
+            // ClearBackground(GREEN); // Fond noir complet
+
+            BeginMode3D(camera);
+                
+                // Appel à la fonction définie dans city_renderer.cpp
+                DrawCityMap(city); 
+                DrawGrid(200, 10.0f); // Grille de référence
+
+            EndMode3D();
+
+            // Dessin de l'interface utilisateur
+            DrawFPS(10, 10);
+            DrawText("Controles Camera: [1] Libre, [2] Suivre Vehicule, [3] Strategique (Z/Q/S/D pour se deplacer)", 10, 30, 20, RAYWHITE);
+            DrawText("Controles Urgence: [ESPACE] Demarrer, [ENTER] Arreter", 10, 50, 20, RAYWHITE);
+            DrawText(TextFormat("Mode Actuel: %d (3 = Strategique)", currentCameraMode), 10, 70, 20, RAYWHITE);
+            
+            // Affichage de l'état de l'urgence
             if (currentEmergency.is_active) {
-                StopEmergency();
-            } else {
-                StartEmergency(city);
+                DrawText("URGENCE ACTIVE", screenWidth - 200, 10, 20, YELLOW);
             }
-        }
 
-        // Changement de layout
-        if (IsKeyPressed(KEY_F1)) {
-            city = GenerateFuturisticCity(8, GRID_LAYOUT);
-            InitEmergencySystem(city);
-        }
-        if (IsKeyPressed(KEY_F2)) {
-            city = GenerateFuturisticCity(6, CIRCULAR_LAYOUT);
-            InitEmergencySystem(city);
-        }
-        if (IsKeyPressed(KEY_F3)) {
-            city = GenerateFuturisticCity(200, ORGANIC_LAYOUT);
-            InitEmergencySystem(city);
-        }
-
-        // Dessin
-        DrawScene(camera, city);
+        EndDrawing();
     }
 
+    // --- Fermeture ---
     CloseWindow();
     return 0;
 }

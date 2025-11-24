@@ -4,10 +4,10 @@
 #include "raylib.h"
 #include "raymath.h"
 
-// Constantes de la caméra
-const float CAMERA_MOVE_SPEED = 1.0f;
-const float CAMERA_ROTATION_SPEED = 0.005f;
-const float CAMERA_ZOOM_SPEED = 1.0f;
+// // Constantes de la caméra
+// const float CAMERA_MOVE_SPEED = 1.0f;
+// const float CAMERA_ROTATION_SPEED = 0.005f;
+// const float CAMERA_ZOOM_SPEED = 1.0f;
 
 // Modes de caméra
 typedef enum {
@@ -23,6 +23,7 @@ extern CustomCameraMode currentCameraMode;
 Camera3D createBaseCamera();
 void UpdateFreeCamera(Camera3D* camera);
 void UpdateFollowCamera(Camera3D* camera, const Vector3& targetPosition);
+void UpdateStrategicCamera(Camera3D* camera, float deltaTime); // NOUVELLE DECLARATION
 void UpdateCameraMode(Camera3D* camera, const Vector3& followTarget);
 
 #endif

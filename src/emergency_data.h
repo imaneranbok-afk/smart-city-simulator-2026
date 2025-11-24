@@ -23,11 +23,13 @@ struct Emergency {
     int target_building_index;
 };
 
-// Constantes pour les effets visuels
-const Color COLOR_SIREN_RED = { 255, 0, 0, 255 };
-const Color COLOR_SIREN_BLUE = { 0, 0, 255, 255 };
-const Color COLOR_HIGHLIGHT_BUILDING = { 255, 255, 0, 255 };
-const Color COLOR_TRAIL = { 255, 165, 0, 100 };
+// Constantes pour les effets visuels (Sirènes classiques gardées pour la lisibilité)
+const Color COLOR_SIREN_RED = { 255, 0, 0, 255 };      // Rouge de sirène
+const Color COLOR_SIREN_BLUE = { 0, 0, 255, 255 };     // Bleu de sirène
+
+// --- Mise à jour pour le Thème Neon (Magenta) ---
+const Color COLOR_HIGHLIGHT_BUILDING = { 255, 0, 255, 255 }; // Magenta vif pour le surlignage
+const Color COLOR_TRAIL = { 255, 0, 255, 100 };             // Traînée de Magenta/Fuchsia
 
 // Variables globales
 extern Vehicle emergencyVehicle;
